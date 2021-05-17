@@ -2,11 +2,11 @@
 #           PLEASE READ - I CAN'T PROVIDE SUPPORT
 # ------------------------------------------------------------
 
-# A3DA to MMD Camera Converter v0.01 for Blender 2.8.x onwards
+# A3DA to MMD Camera Solver v0.01b for Blender 2.8.x onwards
 #     To be used with my A3DA script (or expect strange
 #     results). This script bakes Diva cameras from their
-#     native rig into the basic MMD rig. Now for the obligatory
-#     FOV rant:
+#     native rig into the basic MMD rig. Now for the
+#     obligatory FOV rant:
 #
 #     The field of view of a camera controls how much it sees.
 #     This can be changed for artistic effect, and is done so
@@ -16,8 +16,8 @@
 #
 #     This script offers two methods of exporting, both with
 #     their own compromises:
-#      - FOV bone animation. Exports the native vertical FOV in
-#        degrees to be applied to a shader for perfect FOV.
+#      - FOV bone animation. Exports the native vertical FOV
+#        in degrees to be applied to a shader for perfect FOV.
 #        One example is kh40's MES40 - I helped add a patch
 #        for custom FOV, so all you need to do is apply the
 #        VMD to the controller object. Unfortunately shaders
@@ -177,9 +177,12 @@ def findConstrainedCameras():
     # Find cameras created using A3DA Library
     output = []
     for obj in bpy.data.objects:
-        if type(obj.data) == bpy.types.Camera:
-            if "Camera Constraint" in obj.parent.name:
-                output.append(obj)
+        try:
+            if type(obj.data) == bpy.types.Camera:
+                if "Camera Constraint" in obj.parent.name:
+                    output.append(obj)
+        except:
+            pass
     return output
 
 def findCameraJumps(cameraObj):
