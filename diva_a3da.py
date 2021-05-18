@@ -57,16 +57,16 @@ from bpy.props import StringProperty
 from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator
 from os import walk, getcwd, system
+from os import name as OS_NAME
 
 canRun = True
 
 try:
     from treelib import Tree
 except ImportError:
-    import os
     print("Detected treelib is missing!")
     
-    if os.name == "nt":
+    if OS_NAME == "nt":
         print("\tAttempting to install treelib...")
         pathPython = None
 
