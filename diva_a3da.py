@@ -24,18 +24,6 @@
 
 
 # ------------------------------------------------------------
-#         IMPORTANT - THIS SCRIPT HAS REQUIREMENTS
-# ------------------------------------------------------------
-# "treelib" is a required module for parsing the A3DAs.
-# To install this, go into your Blender install directory,
-#     and then into the python/bin directory.
-# In a command line, do (for Windows, but adjust as needed)
-#
-# python.exe -m ensurepip
-# python.exe -m pip install treelib
-
-
-# ------------------------------------------------------------
 #                         CREDITS
 # ------------------------------------------------------------
 # Script (old, don't judge)   - banitron (me, deviantArt)
@@ -43,6 +31,43 @@
 
 # Thanks to anyone who have used my motions over the years <3
 # Feel free to edit. Please credit if you use this code.
+
+
+# ------------------------------------------------------------
+#                        HOW TO USE
+# ------------------------------------------------------------
+# If this is your first time running the script, open the
+# Blender console and watch the output for any messages.
+# This script will attempt to automatically install
+# requirements to your Blender Python. This only works on
+# Windows, so read the REQUIREMENTS section to get this
+# working on other platforms. This will cause Blender to
+# pause while treelib is being downloaded and installed.
+#
+# If you're trying to apply a stage or object anim, import
+# the item in from MikuMikuModel as a DAE first and then run
+# this script; no need to do this for cameras. A popup should
+# then appear. Find your A3DA of choice to apply to all
+# available objects.
+#
+# If no popup appears, treelib is not installed correctly.
+# You may need to do this manually - see below.
+
+
+# ------------------------------------------------------------
+#               THIS SCRIPT HAS REQUIREMENTS
+# ------------------------------------------------------------
+# "treelib" is a required module for parsing the A3DAs.
+# The script will attempt to automatically install this - 
+#     this only works if you are on Windows.
+#
+# If this fails, go into your Blender install directory,
+#     and then into the python/bin directory.
+# In a command line, do (for Windows, but adjust as needed)
+#
+# python.exe -m ensurepip
+# python.exe -m pip install treelib
+
 
 
 
