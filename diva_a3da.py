@@ -1,15 +1,8 @@
-import sys, bpy, math, traceback
-from treelib import Tree      # <--- read below!
-from numpy import frombuffer
-from bpy.props import StringProperty
-from bpy_extras.io_utils import ImportHelper
-from bpy.types import Operator
-
 # ------------------------------------------------------------
 #           PLEASE READ - I CAN'T PROVIDE SUPPORT
 # ------------------------------------------------------------
 
-# Project Diva A3DA Importer v0.01 for Blender 2.8.x onwards
+# Project Diva A3DA Importer v0.01b for Blender 2.8.x onwards
 #     A3DA support is limited - FT and DT is best.
 #     Cameras and object animations are supported, but are
 #     not setup exactly like the game - eg you won't see
@@ -57,6 +50,41 @@ from bpy.types import Operator
 # ------------------------------------------------------------
 #            SCRIPT BELOW - MODIFY WITH CAUTION
 # ------------------------------------------------------------
+
+import sys, bpy, math, traceback
+from numpy import frombuffer
+from bpy.props import StringProperty
+from bpy_extras.io_utils import ImportHelper
+from bpy.types import Operator
+from os import walk, getcwd, system
+
+canRun = True
+
+try:
+    from treelib import Tree
+except ImportError:
+    import os
+    print("Detected treelib is missing!")
+    
+    if os.name == "nt":
+        print("\tAttempting to install treelib...")
+        pathPython = None
+
+        for path in walk(getcwd()):
+            if "python.exe" in path[-1]:
+                pathPython = path[0]
+                break
+
+        if pathPython != None:
+            system('cd ' + pathPython + " & python.exe -m ensurepip & python.exe -m pip install treelib")
+        
+        try:
+            from treelib import Tree
+        except ImportError:
+            print("\tCould not install treelib successfully - quitting!")
+            canRun = False
+    else:
+        canRun = False
 
 masterCollectionName = "Collection" # This is the target for script. If this is missing, you'll get an error
 scaleTime = 1
@@ -970,5 +998,8 @@ def register():
 def unregister():
     bpy.utils.unregister_class(ImportA3da)
 
-register()
-bpy.ops.import_test.some_data('INVOKE_DEFAULT')
+if canRun:
+    register()
+    bpy.ops.import_test.some_data('INVOKE_DEFAULT')
+else:
+    print("\tScript could not execute due to missing treelib!")
