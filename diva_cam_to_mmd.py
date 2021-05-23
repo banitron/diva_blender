@@ -2,7 +2,7 @@
 #           PLEASE READ - I CAN'T PROVIDE SUPPORT
 # ------------------------------------------------------------
 
-# A3DA to MMD Camera Solver v0.01b for Blender 2.8.x onwards
+# A3DA to MMD Camera Solver v0.01c for Blender 2.8.x onwards
 #     To be used with my A3DA script (or expect strange
 #     results). This script bakes Diva cameras from their
 #     native rig into the basic MMD rig. Now for the
@@ -179,7 +179,7 @@ def findConstrainedCameras():
     for obj in bpy.data.objects:
         try:
             if type(obj.data) == bpy.types.Camera:
-                if "Camera Constraint" in obj.parent.name:
+                if "Camera Constraint" in obj.parent.name and "Camera Position" in obj.parent.parent.name and "MMD" not in obj.name:
                     output.append(obj)
         except:
             pass
@@ -253,10 +253,12 @@ def addMmdCamera(cameraObj, cameraJumps):
     
     bpy.ops.object.camera_add(location=(0,0,0), rotation=(0,0,0))
     mmdCam = bpy.context.object
-    mmdCam.name = getDuplicateSafeName("MMD Camera")
+    mmdCam.name = getDuplicateSafeName("MMD " + cameraObj.name)
     mmdCam.parent = cameraObj.parent
     mmdCam.animation_data_create()
-    mmdCam.animation_data.action = cameraObj.animation_data.action.copy()
+    
+    if cameraObj.animation_data != None and cameraObj.animation_data.action != None:
+        mmdCam.animation_data.action = cameraObj.animation_data.action.copy()
     
     fovCurve = None
     if cameraObj.data.animation_data != None and cameraObj.data.animation_data.action != None:
@@ -420,7 +422,7 @@ class AnimationVmd(object):
         self.keyframeBones = []
         self.keyframeCamera = []
     
-    def export(self, filename, cameraCuts, camExtension = "_camera.vmd"):
+    def export(self, filename, cameraCuts, camExtension = " - Camera.vmd"):
         
         def getClosestCut(value):
             targetVal = value + 10000
@@ -433,7 +435,7 @@ class AnimationVmd(object):
                     if val == cameraCuts[-1]:
                         break
                     
-            if lastVal == None:
+            if lastVal == None or lastVal <= value:
                 lastVal = targetVal
             return lastVal
         
@@ -444,7 +446,7 @@ class AnimationVmd(object):
                 currentFrame = 0
                 while currentFrame != cameraCuts[-1]:
                     nextFrame = getClosestCut(currentFrame)
-                    self.binaryExporter(filename + "_" + str(currentFrame) + " to " + str(nextFrame - 1) + camExtension, b'\x83\x4A\x83\x81\x83\x89\x81\x45\x8F\xC6\x96\xBE\x00on Data', [], self.keyframeCamera[currentFrame:nextFrame])
+                    self.binaryExporter(filename + " - " + str(currentFrame) + " to " + str(nextFrame - 1) + camExtension, b'\x83\x4A\x83\x81\x83\x89\x81\x45\x8F\xC6\x96\xBE\x00on Data', [], self.keyframeCamera[currentFrame:nextFrame])
                     currentFrame = nextFrame
             else:
                 self.binaryExporter(filename + camExtension, b'\x83\x4A\x83\x81\x83\x89\x81\x45\x8F\xC6\x96\xBE\x00on Data', [], self.keyframeCamera)
@@ -503,19 +505,22 @@ def blenderDataToMmdData(cameraObj):
 
 def exportCamera(cameraObj):
     output = []
-    if cameraObj.animation_data != None and cameraObj.animation_data.action != None and len(cameraObj.animation_data.action.fcurves) > 0:
-        focalLength = None
-        if cameraObj.data.animation_data != None and cameraObj.data.animation_data.action != None:
-            for animTrack in cameraObj.data.animation_data.action.fcurves:
-                if animTrack.data_path == "lens":
-                    focalLength = animTrack
-                    break
-        
-        for frameIndex in range(bpy.context.scene.frame_start, bpy.context.scene.frame_end):
-            bpy.context.scene.frame_set(frameIndex)
-            mmdData = blenderDataToMmdData(cameraObj)
-            output.append([frameIndex, mmdData[0].x, mmdData[0].y, mmdData[0].z, mmdData[1].x, mmdData[1].y, mmdData[1].z,
-                            math.degrees(hfovToVfov(focalLengthToFov(cameraObj, focalLength.evaluate(frameIndex))))])
+    focalLength = None
+    if cameraObj.data.animation_data != None and cameraObj.data.animation_data.action != None:
+        for animTrack in cameraObj.data.animation_data.action.fcurves:
+            if animTrack.data_path == "lens":
+                focalLength = animTrack
+                break
+    
+    for frameIndex in range(bpy.context.scene.frame_start, bpy.context.scene.frame_end):
+        bpy.context.scene.frame_set(frameIndex)
+        mmdData = blenderDataToMmdData(cameraObj)
+        if focalLength != None:
+            focalDeg = math.degrees(hfovToVfov(focalLengthToFov(cameraObj, focalLength.evaluate(frameIndex))))
+        else:
+            focalDeg = 30
+        output.append([frameIndex, mmdData[0].x, mmdData[0].y, mmdData[0].z, mmdData[1].x, mmdData[1].y, mmdData[1].z, focalDeg])
+    
     return output
 
 def transformBlenderDump(vmdObject, blenderDump):
@@ -589,24 +594,24 @@ def exportData(filename, computeMmdCamera, addHalfFrameRate):
         camData = exportCamera(camera)
         outputVmd = generateNewVmd(camData)
         createFovBone(outputVmd)
-        outputVmd.export(baseFilename + "_fov_" + camera.name + "_" + str(fps), jumpCameras[indexCamera])
+        outputVmd.export(baseFilename + " FOV " + camera.name + ", " + str(fps) + "fps", jumpCameras[indexCamera])
         
         if addHalfFrameRate:
             outputVmd = generateNewVmd(camData)
             halveFrameRate(outputVmd)
             createFovBone(outputVmd)
-            outputVmd.export(baseFilename + "_fov_" + camera.name + "_" + str(fps // 2), getHalvedCamJump(jumpCameras[indexCamera]))
+            outputVmd.export(baseFilename + " FOV " + camera.name + ", " + str(fps // 2) + "fps", getHalvedCamJump(jumpCameras[indexCamera]))
     
     for indexCamera, camera in enumerate(mmdCameras):
         # TODO - Name, LUL
         camData = exportCamera(camera)
         outputVmd = generateNewVmd(camData)
-        outputVmd.export(baseFilename + "_mmd_" + camera.name + "_" + str(fps), jumpCameras[indexCamera])
+        outputVmd.export(baseFilename + " " + camera.name + ", " + str(fps) + "fps", jumpCameras[indexCamera])
         
         if addHalfFrameRate:
             outputVmd = generateNewVmd(camData)
             halveFrameRate(outputVmd)
-            outputVmd.export(baseFilename + "_mmd_" + camera.name + "_" + str(fps // 2), getHalvedCamJump(jumpCameras[indexCamera]))
+            outputVmd.export(baseFilename + " " + camera.name + ", " + str(fps // 2) + "fps", getHalvedCamJump(jumpCameras[indexCamera]))
     
 
 class ExportSomeData(Operator, ExportHelper):
